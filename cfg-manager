@@ -27,7 +27,8 @@ link_file(){
   str=""$linkname" -> "$target""
   bn=$(basename "$linkname")
   if [[ ! -e "$linkname" ]]; then
-    ln -s  "$target" "$linkname" && echo $str && return 
+    ln -s  "$target" "$linkname" || die "Unable to create link "$linkname" -> "$target""
+    echo $str; return 
   elif [[ "$target" == $(realpath "$linkname") ]]; then
     return
   fi
@@ -38,9 +39,10 @@ link_file(){
     read -r -p ""$bn" already exists, [s]kip, [o]verwrite?" action
   fi
   case ${if_exists:-$action} in
-    o)    ln -fs "$target" "$linkname" && echo "$str";;
-    s)    ;;
-    *)    die "wrong input"
+    o)    ln -fs "$target" "$linkname" || die "Unable to create link "$linkname" -> "$target""
+          echo "$str"; return;;
+    s)    return;;
+    *)    die "Wrong input: [s]kip, [o]verwrite"
   esac
 }
 
@@ -61,8 +63,10 @@ cmd_link() {
 	esac done
 
 	[[ $err -ne 0 || $# -ne 0 ]] && die "Usage: $PROGRAM $COMMAND [--symlink-suffix .suffix] [--symlink-all-suffix .suffix] [--skip,-s | --overwrite,-o]"
+  echo "Creating links in "$DOTFILES_TARGET_DIR" to "$DOTFILES_DIR""
+  [[ -d "$DOTFILES_TARGET_DIR" ]] || die "Target directory $DOTFILES_TARGET_DIR missing"
+  [[ -d "$DOTFILES_DIR" ]] || die "dotfiles directory $DOTFILES_DIR missing"
 
-  echo "linking "$DOTFILES_TARGET_DIR" to "$DOTFILES_DIR""
   while read -r -d "" dir; do
     while read -r -d "" file; do
       link_file "$file" ""$DOTFILES_TARGET_DIR"/.$(basename "${dir%.*}")/$(basename "$file")" 
