@@ -71,7 +71,7 @@ cmd_link() {
   done< <($FIND "$DOTFILES_DIR" "${FIND_OPTS[@]}" -path "$symlink_all_pattern" -prune -o -name "$symlink_pattern" -print0)
 }
 
-PROGRAM="idk"
+PROGRAM="cfg-manager"
 COMMAND="$1"
 GETOPT="getopt"
 
