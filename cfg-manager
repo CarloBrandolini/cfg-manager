@@ -3,7 +3,10 @@ set -o pipefail
 
 # generic 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+DOTFILES_DIR=${DOTFILES_DIR%/}
 DOTFILES_TARGET_DIR="${DOTFILES_TARGET_DIR:-$HOME}" # note that the target in ln terminology is the opposite, i.e. the target of the link. 
+DOTFILES_TARGET_DIR=${DOTFILES_TARGET_DIR%/}
+
 
 FIND="find -H"
 FIND_OPTS=( $DOTFILES_FIND_OPTS )
