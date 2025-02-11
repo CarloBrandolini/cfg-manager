@@ -62,20 +62,24 @@ cmd_link() {
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 || $# -ne 0 ]] && die "Usage: $PROGRAM $COMMAND [--symlink-suffix .suffix] [--symlink-all-suffix .suffix] [--skip,-s | --overwrite,-o]"
-  echo "Creating links in "$DOTFILES_TARGET_DIR" to "$DOTFILES_DIR""
+	[[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND [--symlink-suffix .suffix] [--symlink-all-suffix .suffix] [--skip,-s | --overwrite,-o] [id]"
+  local id root
+  [[ $# -eq 1 ]] && id=$1
+  root="$DOTFILES_DIR/${id%/}"
+  
+  echo "Creating links in "$DOTFILES_TARGET_DIR" to "$root""
   [[ -d "$DOTFILES_TARGET_DIR" ]] || die "Target directory $DOTFILES_TARGET_DIR missing"
-  [[ -d "$DOTFILES_DIR" ]] || die "dotfiles directory $DOTFILES_DIR missing"
-
+  [[ -d "$root" ]] || die "dotfiles directory $root missing"
+  
   while read -r -d "" dir; do
     while read -r -d "" file; do
       link_file "$file" ""$DOTFILES_TARGET_DIR"/.$(basename "${dir%.*}")/$(basename "$file")" 
     done< <(find -H "$dir" -maxdepth 1 -mindepth 1 -path '*.git' -prune -o -print0)
-	done < <($FIND "$DOTFILES_DIR" "${FIND_OPTS[@]}" -name "$symlink_all_pattern" -print0)
+	done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$symlink_all_pattern" -print0)
 
   while read -r -d "" file; do
     link_file "$file" ""$DOTFILES_TARGET_DIR"/.$(basename "${file%.*}")" 
-  done< <($FIND "$DOTFILES_DIR" "${FIND_OPTS[@]}" -path "$symlink_all_pattern" -prune -o -name "$symlink_pattern" -print0)
+  done< <($FIND "$root" "${FIND_OPTS[@]}" -path "$symlink_all_pattern" -prune -o -name "$symlink_pattern" -print0)
 }
 
 PROGRAM="cfg-manager"
@@ -85,6 +89,6 @@ GETOPT="getopt"
 case "$1" in
   link) shift;        cmd_link "$@";;
   install) shift      cmd_install "$@";;
-  *)                  die "Usage: $PROGRAM [link|install] [options]";;
+  *)                  die "Usage: $PROGRAM [link|install] [options] [id]";;
 esac
 exit 0
