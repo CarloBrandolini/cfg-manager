@@ -88,7 +88,6 @@ COMMAND="$1"
 
 case "$1" in
   link) shift;        cmd_link "$@";;
-  install) shift      cmd_install "$@";;
-  *)                  die "Usage: $PROGRAM [link|install] [options] [id]";;
+  *)                  die "Usage: $PROGRAM link [options] [id]";;
 esac
 exit 0
