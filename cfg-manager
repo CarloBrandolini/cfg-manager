@@ -8,6 +8,7 @@ DOTFILES_TARGET_DIR="${DOTFILES_TARGET_DIR:-$HOME}" # note that the target in ln
 DOTFILES_TARGET_DIR=${DOTFILES_TARGET_DIR%/}
 
 
+GETOPT="getopt"
 FIND="find -H"
 FIND_OPTS=( $DOTFILES_FIND_OPTS )
 
@@ -84,7 +85,6 @@ cmd_link() {
 
 PROGRAM="cfg-manager"
 COMMAND="$1"
-GETOPT="getopt"
 
 case "$1" in
   link) shift;        cmd_link "$@";;
