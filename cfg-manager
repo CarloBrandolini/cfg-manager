@@ -87,11 +87,45 @@ cmd_link() {
   done< <($FIND "$root" "${FIND_OPTS[@]}" -path "$symlink_all_pattern" -prune -o -name "$symlink_pattern" -print0)
 }
 
+cmd_inject() {
+  local opts="$($GETOPT -o d -l target-file:,suffix: -n "$PROGRAM" -- "$@")"
+  local err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+    --suffix)       local pattern="*$2"; shift 2;;
+		--target-file)  local target_file="$2"; shift 2;;
+		--)             shift; break ;;
+	esac done
+
+  [[ -n $pattern && -n $target_file ]] || die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [id]"
+
+  [[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [id]"
+  [[ $# -eq 1 ]] && local id=$1
+  local root="$DOTFILES_DIR/${id%/}"
+
+  local str
+  [[ -e "$target_file" ]] && local file_content=$(<"$target_file")
+  while read -r -d "" file; do
+    local bn=$(basename "${file%.*}")
+    tag_open="$TAG_OPEN "$bn""
+    tag_close="$TAG_CLOSE "$bn""
+    ( [[ -e "$file_content" ]] && grep -q "$tag_open" <<< "$file_content" ) && continue
+    local to_inject=$(<"$file")
+    str+=$(printf "%s\n$to_inject\n%s" "$tag_open" "$tag_close")
+    str+=$'\n\n'
+  done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$pattern" -print0)
+  echo "$str" >> $target_file
+}
+
 PROGRAM="cfg-manager"
+TAG_OPEN="# --$PROGRAM--TAG-OPEN"
+TAG_CLOSE="# --$PROGRAM--TAG-CLOSE"
+
 COMMAND="$1"
 
 case "$1" in
-  link) shift;        cmd_link "$@";;
-  *)                  die "Usage: $PROGRAM link [options] [id]";;
+  link) shift;          cmd_link "$@";;
+  inject) shift;        cmd_inject "$@";;
+  *)                    die "Usage: $PROGRAM link [options] [id]";;
 esac
 exit 0
