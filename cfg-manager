@@ -113,7 +113,7 @@ cmd_inject() {
     str+=$(printf "%s\n$to_inject\n%s" "$tag_open" "$tag_close")
     str+=$'\n\n'
   done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$pattern" -print0)
-  echo "$str" >> $target_file
+  [[ -n $str ]] && echo "$str" >> $target_file
 }
 
 PROGRAM="cfg-manager"
