@@ -24,6 +24,14 @@ report () {
 	echo "$@" >&2
 }
 
+overwrite_link() {
+  local target linkname
+  target="$1" linkname="$2"
+  [[ -d "$linkname" ]] && die "$linkname is a directory. Remove it before using it as the source of the link" 
+  # ln -fsn "$target" "$linkname" # the -n ensures the directory is removed, but better let the user delete it...
+  ln -fs "$target" "$linkname" || report "Unable to create link $str"
+}
+
 link_file(){
   local target linkname str
   target="$1" linkname="$2" # here target and linkname follow ln terminology
@@ -42,8 +50,7 @@ link_file(){
     read -r -p ""$bn" already exists, [s]kip, [o]verwrite?" action
   fi
   case ${if_exists:-$action} in
-    o)    ln -fs "$target" "$linkname" || report "Unable to create link $str"; return
-          echo "$str"; return;;
+    o)    overwrite_link "$target" "$linkname"; return;;
     s)    return;;
     *)    die "Wrong input: [s]kip, [o]verwrite"
   esac
@@ -87,12 +94,13 @@ cmd_link() {
 }
 
 cmd_inject() {
-  local opts="$($GETOPT -o d -l target-file:,suffix: -n "$PROGRAM" -- "$@")"
+  local opts="$($GETOPT -o d -l target-file:,suffix:,line-prefix: -n "$PROGRAM" -- "$@")"
   local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
     --suffix)       local pattern="*$2"; shift 2;;
 		--target-file)  local target_file="$2"; shift 2;;
+		--line-prefix)  local line_prefix="$2"; shift 2;;
 		--)             shift; break ;;
 	esac done
 
@@ -110,6 +118,7 @@ cmd_inject() {
     tag_close="$TAG_CLOSE "$bn""
     ( [[ -e "$target_file" ]] && grep -q "$tag_open" <<< "$file_content" ) && continue
     local to_inject=$(<"$file")
+    [[ -n $line_prefix ]] && str+="$line_prefix"
     str+=$(printf "%s\n$to_inject\n%s" "$tag_open" "$tag_close")
     str+=$'\n\n'
   done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$pattern" -print0)
