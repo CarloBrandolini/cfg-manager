@@ -108,7 +108,7 @@ cmd_inject() {
     local bn=$(basename "${file%.*}")
     tag_open="$TAG_OPEN "$bn""
     tag_close="$TAG_CLOSE "$bn""
-    ( [[ -e "$file_content" ]] && grep -q "$tag_open" <<< "$file_content" ) && continue
+    ( [[ -e "$target_file" ]] && grep -q "$tag_open" <<< "$file_content" ) && continue
     local to_inject=$(<"$file")
     str+=$(printf "%s\n$to_inject\n%s" "$tag_open" "$tag_close")
     str+=$'\n\n'
