@@ -4,8 +4,6 @@ set -o pipefail
 # generic 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 DOTFILES_DIR=${DOTFILES_DIR%/}
-DOTFILES_TARGET_DIR="${DOTFILES_TARGET_DIR:-$HOME}" # note that the target in ln terminology is the opposite, i.e. the target of the link. 
-DOTFILES_TARGET_DIR=${DOTFILES_TARGET_DIR%/}
 
 
 GETOPT="getopt"
@@ -49,17 +47,19 @@ link_file(){
 
 cmd_link() {
   local opts
-  local symlink_pattern symlink_all_pattern if_exists
+  local target_dir symlink_pattern symlink_all_pattern if_exists
+  target_dir="$HOME" # note that the target in ln terminology is the opposite, i.e. the target of the link. 
   symlink_pattern="*.symlink"
   symlink_all_pattern="*.symlink_all"
-  opts="$($GETOPT -o so -l skip,overwrite,symlink-suffix:,symlink-all-suffix: -n "$PROGRAM" -- "$@")"
+  opts="$($GETOPT -o so -l skip,overwrite,symlink-suffix:,symlink-all-suffix:,target-dir: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
-    -s|--skip) if_exists="s"; shift ;;
-    -o|--overwrite) if_exists="o"; shift ;;
-		--symlink-suffix) symlink_pattern="*$2"; shift 2;;
-		--symlink-all-suffix) symlink_all_pattern="*$2"; shift 2;;
+    -s|--skip)                      if_exists="s"; shift ;;
+    -o|--overwrite)                 if_exists="o"; shift ;;
+		--symlink-suffix)               symlink_pattern="*$2"; shift 2;;
+		--symlink-all-suffix)           symlink_all_pattern="*$2"; shift 2;;
+    --target-dir)                   target_dir="${2%/}"; shift 2;;
 		--) shift; break ;;
 	esac done
 
@@ -68,18 +68,18 @@ cmd_link() {
   [[ $# -eq 1 ]] && id=$1
   root="$DOTFILES_DIR/${id%/}"
   
-  echo "Creating links in "$DOTFILES_TARGET_DIR" to "$root""
-  [[ -d "$DOTFILES_TARGET_DIR" ]] || die "Target directory $DOTFILES_TARGET_DIR missing"
+  echo "Creating links in "$target_dir" to "$root""
+  [[ -d "$target_dir" ]] || die "Target directory $target_dir missing"
   [[ -d "$root" ]] || die "dotfiles directory $root missing"
   
   while read -r -d "" dir; do
     while read -r -d "" file; do
-      link_file "$file" ""$DOTFILES_TARGET_DIR"/.$(basename "${dir%.*}")/$(basename "$file")" 
+      link_file "$file" ""$target_dir"/.$(basename "${dir%.*}")/$(basename "$file")" 
     done< <(find -H "$dir" -maxdepth 1 -mindepth 1 -path '*.git' -prune -o -print0)
 	done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$symlink_all_pattern" -print0)
 
   while read -r -d "" file; do
-    link_file "$file" ""$DOTFILES_TARGET_DIR"/.$(basename "${file%.*}")" 
+    link_file "$file" ""$target_dir"/.$(basename "${file%.*}")" 
   done< <($FIND "$root" "${FIND_OPTS[@]}" -path "$symlink_all_pattern" -prune -o -name "$symlink_pattern" -print0)
 }
 
