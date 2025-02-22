@@ -20,13 +20,17 @@ die() {
 	exit 1
 }
 
+report () { 
+	echo "$@" >&2
+}
+
 link_file(){
   local target linkname str
   target="$1" linkname="$2" # here target and linkname follow ln terminology
   str=""$linkname" -> "$target""
   bn=$(basename "$linkname")
   if [[ ! -e "$linkname" ]]; then
-    ln -s  "$target" "$linkname" || die "Unable to create link "$linkname" -> "$target""
+    ln -s  "$target" "$linkname" || report "Unable to create link $str"; return
     echo $str; return 
   elif [[ "$target" == $(realpath "$linkname") ]]; then
     return
@@ -38,7 +42,7 @@ link_file(){
     read -r -p ""$bn" already exists, [s]kip, [o]verwrite?" action
   fi
   case ${if_exists:-$action} in
-    o)    ln -fs "$target" "$linkname" || die "Unable to create link "$linkname" -> "$target""
+    o)    ln -fs "$target" "$linkname" || report "Unable to create link $str"; return
           echo "$str"; return;;
     s)    return;;
     *)    die "Wrong input: [s]kip, [o]verwrite"
