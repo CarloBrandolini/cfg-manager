@@ -134,7 +134,9 @@ cmd_install() {
 		--)           shift; break ;;
 	esac done
 
-	[[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND --file-name file-name [id]"
+  [[ -n $file_name ]] || die "Usage: $PROGRAM $COMMAND --file-name file-name [id]"
+
+  [[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND --file-name file-name [id]"
   local id root
   [[ $# -eq 1 ]] && id=$1
   root="$DOTFILES_DIR/${id%/}"
