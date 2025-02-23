@@ -95,21 +95,22 @@ cmd_link() {
 }
 
 cmd_inject() {
-  local opts="$($GETOPT -o d -l target-file:,suffix:,line-prefix: -n "$PROGRAM" -- "$@")"
+  local opts="$($GETOPT -o d -l target-file:,suffix:,line-prefix:,prepend -n "$PROGRAM" -- "$@")"
   local err=$?
-  local pattern target_file line_prefix
+  local pattern target_file line_prefix prepend
 
 	eval set -- "$opts"
 	while true; do case $1 in
     --suffix)       pattern="*$2"; shift 2;;
 		--target-file)  target_file="$2"; shift 2;;
 		--line-prefix)  line_prefix="$2"; shift 2;;
+		--prepend)      prepend="yes"; shift;;
 		--)             shift; break ;;
 	esac done
 
-  [[ -n $pattern && -n $target_file ]] || die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [id]"
+  [[ -n $pattern && -n $target_file ]] || die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [--prepend] [id]"
 
-  [[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [id]"
+  [[ $err -ne 0 || $# -gt 1 ]] && die "Usage: $PROGRAM $COMMAND --suffix .suffix --target-file file [--prepend] [id]"
   [[ $# -eq 1 ]] && local id=$1
   local root="$DOTFILES_DIR/${id%/}"
 
@@ -125,7 +126,12 @@ cmd_inject() {
     str+=$(printf "%s\n$to_inject\n%s" "$tag_open" "$tag_close")
     str+=$'\n\n'
   done < <($FIND "$root" "${FIND_OPTS[@]}" -name "$pattern" -print0)
-  [[ -n $str ]] && echo "$str" >> $target_file
+  [[ -n $str ]] || return
+  if [[ -n $prepend ]];then
+    printf "%s%s" "$str" "$file_content" > "$target_file"
+  else
+    printf "$str" >> "$target_file"
+  fi
 }
 
 cmd_install() {
