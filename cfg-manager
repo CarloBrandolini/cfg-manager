@@ -37,7 +37,7 @@ link_file(){
   target="$1" linkname="$2" # here target and linkname follow ln terminology
   str=""$linkname" -> "$target""
   bn=$(basename "$linkname")
-  if [[ ! -e "$linkname" ]]; then
+  if [[ ! (-e "$linkname" || -h "$linkname" ) ]]; then
     ln -s  "$target" "$linkname" || report "Unable to create link $str"; return
     echo $str; return 
   elif [[ "$target" == $(realpath "$linkname") ]]; then
@@ -115,7 +115,7 @@ cmd_inject() {
   local root="$DOTFILES_DIR/${id%/}"
 
   local str
-  [[ -e "$target_file" ]] && local file_content=$(<"$target_file")
+  [[ -e "$target_file" || -h "$target_file" ]] && local file_content=$(<"$target_file")
   while read -r -d "" file; do
     local bn=$(basename "${file%.*}")
     tag_open="$TAG_OPEN "$bn""
