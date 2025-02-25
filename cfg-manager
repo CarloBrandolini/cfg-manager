@@ -40,9 +40,10 @@ link_file(){
   if [[ ! (-e "$linkname" || -h "$linkname" ) ]]; then
     ln -s  "$target" "$linkname" || report "Unable to create link $str"; return
     echo $str; return 
-  elif [[ "$target" == $(realpath "$linkname") ]]; then
-    return
   fi
+  
+  local linkname_realpath=$(realpath "$linkname");
+  [[ -e "$linkname_realpath" && "$target" == "$linkname_realpath" ]] && return
   
   local action
 	if [[ ! -n $if_exists ]]; then
